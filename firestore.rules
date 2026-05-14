@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definitions
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    
+    // Schema Validation Helper
+    function isValidBlogStats(data) {
+      return data.keys().hasAll(['views', 'updatedAt']) && 
+             data.keys().size() == 2 &&
+             data.views is int && 
+             data.views >= 0 &&
+             data.updatedAt == request.time;
+    }
+
+    // 1. Blog Stats Collection
+    match /blog_stats/{blogId} {
+      allow get: if true; // Publicly readable
+      
+      allow create: if isValidId(blogId) && 
+                    isValidBlogStats(incoming());
+      
+      allow update: if isValidId(blogId) && 
+                    isValidBlogStats(incoming()) && (
+                      // Transition: Increment views
+                      incoming().diff(existing()).affectedKeys().hasOnly(['views', 'updatedAt']) &&
+                      incoming().views >= existing().views
+                    );
+    }
+  }
+}

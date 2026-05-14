@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "BlogStats": {
+      "title": "Blog Stats",
+      "description": "Statistics for a blog post",
+      "type": "object",
+      "properties": {
+        "views": {
+          "type": "integer",
+          "description": "Total number of views"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last time the stats were updated"
+        }
+      },
+      "required": ["views", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/blog_stats/{blogId}": {
+      "schema": "BlogStats",
+      "description": "Collection of statistics for each blog post"
+    }
+  }
+}
