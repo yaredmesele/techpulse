@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TextInput, ScrollView, Image, TouchableOpacity, FlatList } from 'react-native';
 import { Search, ChevronLeft, Globe, Heart, Cpu, Briefcase, Shirt, Gamepad2 } from 'lucide-react';
 import { Article } from '../types';
-import { motion } from 'motion/react';
-import { cn } from '../lib/utils';
+import { useTheme } from '../context/ThemeContext';
 
 interface CategoryViewProps {
   articles: Article[];
@@ -11,6 +11,7 @@ interface CategoryViewProps {
 }
 
 export default function CategoryView({ articles, onArticleSelect, onBack }: CategoryViewProps) {
+  const { colors, isDark } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   
   const filteredArticles = useMemo(() => {
@@ -23,101 +24,212 @@ export default function CategoryView({ articles, onArticleSelect, onBack }: Cate
   }, [articles, searchTerm]);
 
   const categories = [
-    { id: 'Environment', icon: Globe, color: 'bg-green-100 text-green-600' },
-    { id: 'Health', icon: Heart, color: 'bg-red-100 text-red-600' },
-    { id: 'Technology', icon: Cpu, color: 'bg-blue-100 text-blue-600' },
-    { id: 'Business', icon: Briefcase, color: 'bg-indigo-100 text-indigo-600' },
-    { id: 'Fashion', icon: Shirt, color: 'bg-pink-100 text-pink-600' },
-    { id: 'Gaming', icon: Gamepad2, color: 'bg-orange-100 text-orange-600' },
+    { id: 'Environment', icon: Globe, color: '#e8f5e9', textColor: '#2e7d32' },
+    { id: 'Health', icon: Heart, color: '#ffebee', textColor: '#c62828' },
+    { id: 'Technology', icon: Cpu, color: '#e3f2fd', textColor: '#1565c0' },
+    { id: 'Business', icon: Briefcase, color: '#e8eaf6', textColor: '#283593' },
+    { id: 'Fashion', icon: Shirt, color: '#fce4ec', textColor: '#ad1457' },
+    { id: 'Gaming', icon: Gamepad2, color: '#fff3e0', textColor: '#ef6c00' },
   ] as const;
 
   return (
-    <div className="flex flex-col gap-8 pb-24">
-      {/* Top Bar */}
-      <div className="relative flex items-center justify-center py-2">
-        <button 
-          onClick={onBack}
-          className="absolute left-0 p-2 hover:bg-zinc-100 rounded-full transition-colors"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <h2 className="font-display font-bold text-xl">News Category</h2>
-      </div>
+    <ScrollView style={styles.mainScroll} contentContainerStyle={styles.scrollContent}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Top Bar */}
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={onBack} style={styles.backButton}>
+          <ChevronLeft color={colors.text} size={24} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>News Category</Text>
+      </View>
 
       {/* Search */}
-      <div className="relative group">
-        <input 
-          type="text" 
+      <View style={[styles.searchSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Search style={styles.searchIcon} color={colors.textSecondary} size={20} />
+        <TextInput 
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChangeText={setSearchTerm}
           placeholder="Search for news"
-          className="w-full bg-white border border-zinc-100 rounded-full py-4 pl-12 pr-6 text-sm shadow-sm focus:ring-2 focus:ring-accent/20 transition-all outline-none"
+          placeholderTextColor={colors.textSecondary}
+          style={[styles.searchInput, { color: colors.text }]}
         />
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted transition-colors" />
-      </div>
+      </View>
 
-      {/* Categories Grid */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-display font-bold text-xl">All Category</h3>
-          <button className="text-accent text-sm font-semibold">View All</button>
-        </div>
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-4 overflow-x-auto pb-2 scrollbar-none">
+      {/* Categories Horizontal Scroll */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>All Category</Text>
+          <TouchableOpacity><Text style={[styles.viewAll, { color: colors.primary }]}>View All</Text></TouchableOpacity>
+        </View>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScroll}
+        >
           {categories.map((cat) => (
-            <button key={cat.id} className="flex flex-col items-center gap-2 group min-w-[70px]">
-              <div className={cn(
-                "w-14 h-14 rounded-full flex items-center justify-center transition-all group-hover:scale-110",
-                cat.color
-              )}>
-                <cat.icon className="w-6 h-6" />
-              </div>
-              <span className="text-[10px] font-bold text-muted uppercase tracking-tight">{cat.id}</span>
-            </button>
+            <TouchableOpacity key={cat.id} style={styles.categoryItem}>
+              <View style={[styles.categoryIconCircle, { backgroundColor: isDark ? colors.surface : cat.color }]}>
+                <cat.icon color={isDark ? colors.primary : cat.textColor} size={24} />
+              </View>
+              <Text style={[styles.categoryLabel, { color: colors.textSecondary }]}>{cat.id}</Text>
+            </TouchableOpacity>
           ))}
-        </div>
-      </section>
+        </ScrollView>
+      </View>
 
       {/* Popular News */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-display font-bold text-xl">
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
             {searchTerm ? `Results (${filteredArticles.length})` : 'Popular News!'}
-          </h3>
-          {!searchTerm && <button className="text-accent text-sm font-semibold">View All</button>}
-        </div>
-        <div className="flex flex-col gap-6">
+          </Text>
+          {!searchTerm && <TouchableOpacity><Text style={[styles.viewAll, { color: colors.primary }]}>View All</Text></TouchableOpacity>}
+        </View>
+        <View style={styles.list}>
           {filteredArticles.length > 0 ? (
             filteredArticles.map((article) => (
-              <motion.div
+              <TouchableOpacity
                 key={article.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => onArticleSelect(article)}
-                className="flex gap-4 group cursor-pointer"
+                onPress={() => onArticleSelect(article)}
+                style={styles.newsItem}
               >
-                <img 
-                  src={article.imageUrl} 
-                  className="w-28 h-20 rounded-2xl object-cover shadow-sm group-hover:shadow-md transition-shadow"
-                  alt={article.title}
-                />
-                <div className="flex flex-col justify-between gap-1 flex-1">
-                  <h4 className="font-bold text-sm leading-tight line-clamp-2 transition-colors group-hover:text-accent">
-                    {article.title}
-                  </h4>
-                  <div className="flex items-center gap-2 text-[10px] text-muted font-medium">
-                     <span>{article.timeAgo}</span>
-                  </div>
-                </div>
-              </motion.div>
+                <Image source={{ uri: article.imageUrl }} style={styles.newsImage} />
+                <View style={styles.newsContent}>
+                  <Text style={[styles.newsTitle, { color: colors.text }]} numberOfLines={2}>{article.title}</Text>
+                  <Text style={[styles.newsTime, { color: colors.textSecondary }]}>{article.timeAgo}</Text>
+                </View>
+              </TouchableOpacity>
             ))
           ) : (
-            <div className="text-center py-10">
-              <p className="text-muted text-sm">No matches for "{searchTerm}"</p>
-            </div>
+            <View style={styles.emptyView}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No matches for "{searchTerm}"</Text>
+            </View>
           )}
-        </div>
-      </section>
-    </div>
-  );
+        </View>
+      </View>
+    </View>
+  </ScrollView>
+);
 }
+
+const styles = StyleSheet.create({
+  mainScroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 100,
+    paddingTop: 24,
+  },
+  container: {
+    gap: 32,
+  },
+  topBar: {
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 0,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  searchSection: {
+    position: 'relative',
+    borderRadius: 25,
+    borderWidth: 1,
+    paddingHorizontal: 48,
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 16,
+    top: 14,
+  },
+  searchInput: {
+    height: 48,
+    fontSize: 14,
+  },
+  section: {
+    marginHorizontal: -16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  viewAll: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  categoryScroll: {
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+  categoryItem: {
+    alignItems: 'center',
+    width: 70,
+  },
+  categoryIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  categoryLabel: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  list: {
+    paddingHorizontal: 16,
+    gap: 20,
+  },
+  newsItem: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  newsImage: {
+    width: 112,
+    height: 80,
+    borderRadius: 16,
+  },
+  newsContent: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  newsTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    lineHeight: 18,
+  },
+  newsTime: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  emptyView: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 14,
+  }
+});
+
